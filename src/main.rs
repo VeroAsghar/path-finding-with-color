@@ -3,9 +3,11 @@ use anyhow::Result;
 use glob::glob;
 use image::{DynamicImage, ImageBuffer, Rgb, Pixel, GenericImageView};
 use image::imageops::blur;
+use imageproc::drawing::draw_line_segment_mut;
 use std::fs::File;
 use std::io::BufReader;
 use std::ops::{Deref, DerefMut};
+
 fn main() -> Result<()> {
 
     let mut frames = Vec::with_capacity(250);
@@ -17,9 +19,18 @@ fn main() -> Result<()> {
     }
     let (w, h) = frames[0].dimensions();
     let mut output = ImageBuffer::new(w, h);
+    let mut start = (0., 0.);
+    let mut first = true;
     for frame in frames {
         let (x, y) = process_frame(frame)?;
-        //output.put_pixel(x, y, Rgb([255u8,0,0]));
+        if first {
+            output.put_pixel(x, y, Rgb([255u8,0,0]));
+            start = (x as f32, y as f32);
+            first = false;
+        } else {
+            draw_line_segment_mut(&mut output, start, (x as f32, y as f32), Rgb([255u8, 255u8, 0]));
+            start = (x as f32, y as f32);
+        }
         let bb = BoundingBox::from_midpoint(x, y, 50, 50);
         for i in bb.x1..=bb.x2 {
             output.put_pixel(i, bb.y1, Rgb([255u8,0,0]));
@@ -29,6 +40,8 @@ fn main() -> Result<()> {
             output.put_pixel(bb.x1, i, Rgb([255u8,0,0]));
             output.put_pixel(bb.x2, i, Rgb([255u8,0,0]));
         }
+    
+
     }
     output.save("test.png")?;
 
