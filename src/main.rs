@@ -19,9 +19,10 @@ fn main() -> Result<()> {
     let mut output = ImageBuffer::new(w, h);
     let mut start = (0., 0.);
     let mut first = true;
+    let proc = Processor::default();
     let centroids: Vec<(u32, u32)> = frames
         .into_par_iter()
-        .map(process_frame)
+        .map(|frame| proc.process_frame(frame))
         .map(centroid)
         .collect();
     for (x, y) in centroids {
@@ -30,12 +31,7 @@ fn main() -> Result<()> {
             start = (x as f32, y as f32);
             first = false;
         } else {
-            draw_line_segment_mut(
-                &mut output,
-                start,
-                (x as f32, y as f32),
-                Rgb([255u8, 255u8, 0]),
-            );
+            draw_line_segment_mut(&mut output, start, (x as f32, y as f32), Rgb([0, 255u8, 0]));
             start = (x as f32, y as f32);
         }
         let bb = BoundingBox::from_midpoint(x, y, 50, 50);
@@ -63,14 +59,29 @@ fn filter_color(
     (xs, ys)
 }
 
-fn process_frame(frame: DynamicImage) -> (Vec<u32>, Vec<u32>) {
-    blur(&frame, 1.0);
-    let frame = frame.as_rgb8().unwrap();
-    let xs = Vec::new();
-    let ys = Vec::new();
-    let rgb1 = [0, 100, 0];
-    let rgb2 = [100, 250, 100];
-    filter_color(&frame, xs, ys, rgb1, rgb2)
+struct Processor {
+    blur: f32,
+    rgb1: [u8; 3],
+    rgb2: [u8; 3],
+}
+
+impl Default for Processor {
+    fn default() -> Self {
+        let blur = 1.0;
+        let rgb1 = [0, 100, 0];
+        let rgb2 = [100, 250, 100];
+        Self { blur, rgb1, rgb2 }
+    }
+}
+
+impl Processor {
+    fn process_frame(&self, frame: DynamicImage) -> (Vec<u32>, Vec<u32>) {
+        blur(&frame, self.blur);
+        let frame = frame.as_rgb8().unwrap();
+        let xs = Vec::new();
+        let ys = Vec::new();
+        filter_color(&frame, xs, ys, self.rgb1, self.rgb2)
+    }
 }
 
 fn centroid((x, y): (Vec<u32>, Vec<u32>)) -> (u32, u32) {
@@ -125,7 +136,8 @@ mod tests {
         frames.push(frame);
         let (w, h) = frames[0].dimensions();
         let mut output = ImageBuffer::new(w, h);
-        let (xs, ys) = process_frame(frames.remove(0));
+        let proc = Processor::default();
+        let (xs, ys) = proc.process_frame(frames.remove(0));
         for (x, y) in xs.clone().into_iter().zip(ys.clone()) {
             output.put_pixel(x, y, Rgb([255u8, 255, 255]));
         }
@@ -134,6 +146,29 @@ mod tests {
         let bb = BoundingBox::from_midpoint(x, y, 50, 50);
         bb.render(&mut output);
         output.save("test_green_after.png")?;
+        Ok(())
+    }
+
+    #[test]
+    pub fn test_track() -> Result<()> {
+        let mut frames = Vec::with_capacity(1);
+        let reader = BufReader::new(File::open("test_track_before.png")?);
+        let frame = image::io::Reader::open("test_track_before.png")?
+            .with_guessed_format()?
+            .decode()?;
+        frames.push(frame);
+        let (w, h) = frames[0].dimensions();
+        let mut output = ImageBuffer::new(w, h);
+        let proc = Processor {
+            blur: 1.0,
+            rgb1: [150, 150, 0],
+            rgb2: [250, 250, 100],
+        };
+        let (xs, ys) = proc.process_frame(frames.remove(0));
+        for (x, y) in xs.clone().into_iter().zip(ys.clone()) {
+            output.put_pixel(x, y, Rgb([255u8, 255, 0]));
+        }
+        output.save("test_track_after.png")?;
         Ok(())
     }
 }
