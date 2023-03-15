@@ -5,21 +5,21 @@ use image::{ImageBuffer, Rgb, GenericImageView};
 
 pub fn main() -> Result<()> {
     let mut frames = Vec::with_capacity(1);
-    let frame = image::io::Reader::open("test_track_before.png")?
+    let frame = image::io::Reader::open("track.png")?
         .with_guessed_format()?
         .decode()?;
     frames.push(frame);
-    let (w, h) = frames[0].dimensions();
+    let (w, h) = (540, 960);
     let mut output = ImageBuffer::new(w, h);
     let proc = Processor {
         blur: 1.0,
-        rgb1: [150, 150, 0],
-        rgb2: [250, 250, 100],
+        rgb1: [120, 120, 0],
+        rgb2: [255, 255, 130],
     };
-    let (xs, ys) = proc.process_frame(frames.remove(0));
+    let (xs, ys) = proc.process_frame(w, h, frames.remove(0));
     for (x, y) in xs.clone().into_iter().zip(ys.clone()) {
         output.put_pixel(x, y, Rgb([255u8, 255, 0]));
     }
-    output.save("test_track_after.png")?;
+    output.save("track_after.png")?;
     Ok(())
 }
