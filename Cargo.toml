@@ -8,7 +8,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.69"
 derive_more = "0.99.17"
+eframe = "0.21.3"
+egui_extras = { version = "0.21.0", features = ["image"] }
 glob = "0.3.1"
 image = "0.24.5"
 imageproc = "0.23.0"
-rayon = "1.6.1"

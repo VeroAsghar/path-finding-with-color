@@ -1,19 +1,17 @@
-use image::imageops::FilterType;
 use image::imageops::blur;
-use image::DynamicImage;
-use image::Rgb;
-use image::ImageBuffer;
 use image::imageops::resize;
-
-
+use image::imageops::FilterType;
+use image::DynamicImage;
+use image::ImageBuffer;
+use image::Rgb;
 
 pub fn filter_color(
     frame: &ImageBuffer<Rgb<u8>, Vec<u8>>,
-    mut xs: Vec<u32>,
-    mut ys: Vec<u32>,
+    xs: &mut Vec<u32>,
+    ys: &mut Vec<u32>,
     [r1, g1, b1]: [u8; 3],
     [r2, g2, b2]: [u8; 3],
-) -> (Vec<u32>, Vec<u32>) {
+) {
     for (x, y, pixel) in frame.enumerate_pixels() {
         let [rp, gp, bp] = pixel.0;
         if rp >= r1 && gp >= g1 && bp >= b1 {
@@ -23,7 +21,6 @@ pub fn filter_color(
             }
         }
     }
-    (xs, ys)
 }
 
 pub struct Processor {
@@ -42,13 +39,18 @@ impl Default for Processor {
 }
 
 impl Processor {
-    pub fn process_frame(&self, width: u32, height: u32, frame: DynamicImage) -> (Vec<u32>, Vec<u32>) {
+    pub fn process_frame(
+        &self,
+        width: u32,
+        height: u32,
+        frame: DynamicImage,
+    ) {
         let frame = resize(&frame, width, height, FilterType::Gaussian);
         blur(&frame, self.blur);
         let frame = DynamicImage::ImageRgba8(frame).to_rgb8();
-        let xs = Vec::new();
-        let ys = Vec::new();
-        filter_color(&frame, xs, ys, self.rgb1, self.rgb2)
+        let mut xs = Vec::new();
+        let mut ys = Vec::new();
+        filter_color(&frame, &mut xs, &mut ys, self.rgb1, self.rgb2);
     }
 }
 
