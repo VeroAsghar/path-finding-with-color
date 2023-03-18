@@ -15,12 +15,23 @@ pub fn filter_color(
     for (x, y, pixel) in frame.enumerate_pixels() {
         let [rp, gp, bp] = pixel.0;
         if rp >= r1 && gp >= g1 && bp >= b1 {
-            if rp < r2 && gp < g2 && bp < b2 {
+            if rp <= r2 && gp <= g2 && bp <= b2 {
                 xs.push(x);
                 ys.push(y);
             }
         }
     }
+}
+
+
+pub fn filter_color_hsv(
+    frame: &ImageBuffer<Rgb<u8>, Vec<u8>>,
+    xs: &mut Vec<u32>,
+    ys: &mut Vec<u32>,
+    [h1, s1, v1]: [u8; 3],
+    [h2, s2, v2]: [u8; 3],
+) {
+    todo!()
 }
 
 pub struct Processor {

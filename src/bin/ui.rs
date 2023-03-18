@@ -1,11 +1,11 @@
 use anyhow::Result;
 use color_tracking::{filter_color, Processor};
 use eframe::egui;
-use eframe::epaint::{TextureHandle, ImageData, ColorImage};
+use eframe::epaint::{ColorImage, ImageData, TextureHandle};
 use egui_extras::RetainedImage;
-use image::imageops::FilterType::Gaussian;
 use image::imageops::resize;
-use image::{ImageBuffer, Rgb, DynamicImage};
+use image::imageops::FilterType::Gaussian;
+use image::{DynamicImage, ImageBuffer, Rgb};
 
 fn main() -> Result<(), eframe::Error> {
     let options = eframe::NativeOptions {
@@ -24,8 +24,6 @@ struct App {
     texture: Option<TextureHandle>,
     image: DynamicImage,
     processor: Processor,
-    xs: Vec<u32>,
-    ys: Vec<u32>,
     w: u32,
     h: u32,
 }
@@ -50,8 +48,6 @@ impl Default for App {
         Self {
             image: DynamicImage::ImageRgb8(frame),
             processor: proc,
-            xs: Vec::new(),
-            ys: Vec::new(),
             w,
             h,
             texture: None,
@@ -73,15 +69,7 @@ impl eframe::App for App {
                 ui.add(egui::Slider::new(&mut self.processor.rgb2[2], 0..=255).text("B"));
             });
 
-            self.texture = Some(ui.ctx().load_texture(
-                    "image",
-                ColorImage::from_rgb(
-                    [self.w as usize, self.h as usize],
-                    self.image.as_flat_samples_u8().unwrap().as_slice()),
-                    Default::default()
-                )
-            );
-            if true {
+            if ui.button("update").clicked() {
                 let mut xs = Vec::new();
                 let mut ys = Vec::new();
                 filter_color(
@@ -91,19 +79,18 @@ impl eframe::App for App {
                     self.processor.rgb1,
                     self.processor.rgb2,
                 );
-                let mut output: ImageBuffer<Rgb<u8>, Vec<u8>> =  ImageBuffer::new(self.w, self.h);
-                for (x, y) in xs.iter().zip(&ys) {
-                    output.put_pixel(*x, *y, Rgb([255u8, 255, 0]));
+                let mut output: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(self.w, self.h);
+                for (x, y) in xs.into_iter().zip(&ys) {
+                    output.put_pixel(x, *y, Rgb([255u8, 255, 0]));
                 }
                 self.texture = Some(ui.ctx().load_texture(
                     "image",
                     ColorImage::from_rgb(
                         [self.w as usize, self.h as usize],
-                        output.as_flat_samples().as_slice()),
-                    Default::default()
-                )
-                );
-
+                        output.as_flat_samples().as_slice(),
+                    ),
+                    Default::default(),
+                ));
             }
 
             // Show the image:
@@ -112,7 +99,6 @@ impl eframe::App for App {
             } else {
                 ui.spinner();
             }
-
         });
     }
 }
