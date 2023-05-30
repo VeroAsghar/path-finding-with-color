@@ -43,8 +43,8 @@ pub struct Processor {
 impl Default for Processor {
     fn default() -> Self {
         let blur = 1.0;
-        let rgb1 = [0, 100, 0];
-        let rgb2 = [10, 200, 150];
+        let rgb1 = [150, 195, 160];
+        let rgb2 = [196, 255, 240];
         Self { blur, rgb1, rgb2 }
     }
 }
@@ -55,13 +55,14 @@ impl Processor {
         width: u32,
         height: u32,
         frame: DynamicImage,
-    ) {
+    ) -> (Vec<u32>, Vec<u32>) {
         let frame = resize(&frame, width, height, FilterType::Gaussian);
         blur(&frame, self.blur);
         let frame = DynamicImage::ImageRgba8(frame).to_rgb8();
         let mut xs = Vec::new();
         let mut ys = Vec::new();
         filter_color(&frame, &mut xs, &mut ys, self.rgb1, self.rgb2);
+        (xs, ys)
     }
 }
 

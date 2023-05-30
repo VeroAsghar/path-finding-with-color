@@ -30,13 +30,13 @@ struct App {
 
 impl Default for App {
     fn default() -> Self {
-        let frame = image::io::Reader::open("track.png")
+        let frame = image::io::Reader::open("calibration/vehicle2.png")
             .unwrap()
             .with_guessed_format()
             .unwrap()
             .decode()
             .unwrap();
-        let (w, h) = (360, 640);
+        let (w, h) = (640, 360);
         let frame = resize(&frame, w, h, Gaussian);
         let frame = DynamicImage::ImageRgba8(frame).to_rgb8();
         let proc = Processor {
@@ -81,7 +81,7 @@ impl eframe::App for App {
                 );
                 let mut output: ImageBuffer<Rgb<u8>, Vec<u8>> = ImageBuffer::new(self.w, self.h);
                 for (x, y) in xs.into_iter().zip(&ys) {
-                    output.put_pixel(x, *y, Rgb([255u8, 255, 0]));
+                    output.put_pixel(x, *y, Rgb([255u8, 255, 255]));
                 }
                 self.texture = Some(ui.ctx().load_texture(
                     "image",
